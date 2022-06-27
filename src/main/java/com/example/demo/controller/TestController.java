@@ -6,12 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class TestController {
@@ -47,5 +42,12 @@ public class TestController {
       @RequestBody TestPayload payload) {
     System.out.println("POST client2 Test OK " + typeId + " " + payload);
     return ResponseEntity.ok("client2 test OK " + typeId + " + token " + token + " payload " + payload);
+  }
+
+  @GetMapping("/test")
+  public ResponseEntity<String> test(@RequestHeader(value = "Authorization", required = false) String token,
+                                     @RequestParam(value = "param", required = false) String param) {
+    System.out.println("client2 Test token " + token + " - param " + param);
+    return ResponseEntity.ok("client2 test OK token " + token + " - param " + param);
   }
 }
