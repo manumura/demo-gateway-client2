@@ -6,6 +6,10 @@ spring:
   application:
     name: demo-gateway-client2
 
+application:
+  token:
+    key: 012345678901234567890123456789ab
+
 management:
   endpoint:
     health:
