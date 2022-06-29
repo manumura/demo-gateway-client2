@@ -13,6 +13,6 @@ import lombok.ToString;
 @ToString
 public class Topic {
 
-  private Integer id;
+  private String uuid;
   private String code;
 }
