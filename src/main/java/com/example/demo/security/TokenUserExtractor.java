@@ -16,10 +16,10 @@ import java.util.Objects;
 @Component
 public class TokenUserExtractor {
 
-  private final InternalTokenService internalTokenService;
+  private final TokenDecoderService tokenDecoderService;
 
-  public TokenUserExtractor(InternalTokenService internalTokenService) {
-    this.internalTokenService = internalTokenService;
+  public TokenUserExtractor(TokenDecoderService tokenDecoderService) {
+    this.tokenDecoderService = tokenDecoderService;
   }
 
   public Mono<Authentication> getAuthentication(String token) {
@@ -27,7 +27,7 @@ public class TokenUserExtractor {
       return Mono.error(new BadCredentialsException("Invalid token"));
     }
 
-    Mono<User> userMono = Mono.justOrEmpty(internalTokenService.decodeToken(token));
+    Mono<User> userMono = Mono.justOrEmpty(tokenDecoderService.decodeToken(token));
     return userMono
         .onErrorResume(e -> {
           log.warn(e.getMessage());

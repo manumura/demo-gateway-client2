@@ -1,7 +1,8 @@
-package com.example.demo.security;
+package com.example.demo.security.impl;
 
 import com.example.demo.dto.User;
 import com.example.demo.properties.ApplicationProperties;
+import com.example.demo.security.TokenDecoderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.paseto.jpaseto.Paseto;
 import dev.paseto.jpaseto.PasetoParser;
@@ -11,12 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
-public class InternalTokenService {
+public class PasetoTokenDecoderServiceImpl implements TokenDecoderService {
 
     private static final String AUDIENCE = "internal";
     private static final String USER_CLAIM = "user";
@@ -24,8 +26,20 @@ public class InternalTokenService {
 
     private final ApplicationProperties applicationProperties;
 
-    public InternalTokenService(ApplicationProperties applicationProperties) {
+    private PasetoParser parser;
+
+    public PasetoTokenDecoderServiceImpl(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
+    }
+
+    @PostConstruct
+    public void init() {
+        SecretKey key = Keys.secretKey(applicationProperties.getToken().getKey().getBytes(StandardCharsets.UTF_8));
+        this.parser = Pasetos.parserBuilder()
+                .setSharedSecret(key)
+                .requireAudience(AUDIENCE)
+//                .requireIssuer("gateway")
+                .build();
     }
 
     public User decodeToken(String token) {
@@ -39,15 +53,8 @@ public class InternalTokenService {
             return null;
         }
 
-        SecretKey key = Keys.secretKey(applicationProperties.getToken().getKey().getBytes(StandardCharsets.UTF_8));
-        PasetoParser parser = Pasetos.parserBuilder()
-                .setSharedSecret(key)
-                .requireAudience(AUDIENCE)
-//                .requireIssuer("gateway")
-                .build();
-
         try {
-            Paseto paseto = parser.parse(token);
+            Paseto paseto = this.parser.parse(token);
             return mapper.convertValue(paseto.getClaims().get(USER_CLAIM), User.class);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
