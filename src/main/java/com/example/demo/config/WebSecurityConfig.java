@@ -19,7 +19,7 @@ import org.springframework.security.web.server.context.WebSessionServerSecurityC
 public class WebSecurityConfig {
 
     private final TokenUserExtractor tokenUserExtractor;
-    private static final String[] WHITELIST_ENDPOINTS = {"/public/**"};
+    private static final String[] WHITELIST_ENDPOINTS = {"/", "/public/**"};
 
     public WebSecurityConfig(TokenUserExtractor tokenUserExtractor) {
         this.tokenUserExtractor = tokenUserExtractor;
@@ -30,37 +30,26 @@ public class WebSecurityConfig {
         return new UserDetailsReactiveAuthenticationManager();
     }
 
+    // https://stackoverflow.com/questions/78112501/sessionmanagement-and-csrf-cors-is-deprecated-since-version-6-1
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         // Disable login form
         http
-                .httpBasic().disable()
-                .formLogin().disable()
-                .csrf().disable()
-                .logout().disable();
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .logout(ServerHttpSecurity.LogoutSpec::disable);
 
         // Custom security filter
         http
-                .authorizeExchange()
-                .pathMatchers(HttpMethod.OPTIONS)
-                .permitAll()
-
-                .and()
-                .authorizeExchange()
-                .matchers(EndpointRequest.to("health", "info", "metrics"))
-                .permitAll()
-
-                .pathMatchers(WHITELIST_ENDPOINTS)
-                .permitAll()
-
-                .and()
-                .addFilterAt(authenticationWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
-                .authorizeExchange()
-                .pathMatchers("/**")
-                .hasAnyAuthority("INTERNAL", "ADMIN", "SUPER-ADMIN")
-
-                .anyExchange()
-                .authenticated();
+                .authorizeExchange(authorize -> authorize
+                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                        .matchers(EndpointRequest.to("health", "info", "metrics")).permitAll()
+                        .pathMatchers(WHITELIST_ENDPOINTS).permitAll()
+                        .pathMatchers("/**").hasAnyAuthority("INTERNAL", "ADMIN", "SUPER-ADMIN")
+                        .anyExchange().authenticated()
+                )
+                .addFilterAt(authenticationWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION);
 
         return http.build();
     }
