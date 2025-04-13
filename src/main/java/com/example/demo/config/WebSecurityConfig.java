@@ -57,7 +57,7 @@ public class WebSecurityConfig {
                 .addFilterAt(authenticationWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .authorizeExchange()
                 .pathMatchers("/**")
-                .hasAnyAuthority("INTERNAL", "ADMIN")
+                .hasAnyAuthority("INTERNAL", "ADMIN", "SUPER-ADMIN")
 
                 .anyExchange()
                 .authenticated();
